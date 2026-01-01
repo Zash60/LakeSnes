@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.1)
+cmake_minimum_required(VERSION 3.20.0...3.31.5)
 
 project("lakesnes")
 
@@ -20,7 +20,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add the native library
 add_library(lakesnes SHARED
-    main.cpp
     emulator_jni.cpp
     ../snes/spc.c
     ../snes/dsp.c
@@ -38,24 +37,21 @@ add_library(lakesnes SHARED
     ../tracing.c
 )
 
-# Find SDL2 (try both system and custom locations)
-find_library(SDL2-lib SDL2)
+# Find SDL2 in Android NDK
+find_path(SDL2_INCLUDE_DIR SDL.h
+    PATHS ${ANDROID_NDK_HOME}/sources/android/SDL2
+          ${ANDROID_NDK_HOME}/sources/SDL2
+)
 
-if(NOT SDL2-lib)
-    # Try to find SDL2 in common locations
-    find_path(SDL2_INCLUDE_DIR SDL.h
-        PATHS ${ANDROID_NDK}/sources/android/SDL2
-              ${ANDROID_NDK}/sources/SDL2
-              /usr/include/SDL2
-    )
-    
-    find_library(SDL2-lib 
-        SDL2
-        PATHS ${ANDROID_NDK}/sources/android/SDL2
-              ${ANDROID_NDK}/sources/SDL2
-              /usr/lib
-    )
-endif()
+find_library(SDL2-lib 
+    SDL2
+    PATHS ${ANDROID_NDK_HOME}/sources/android/SDL2
+          ${ANDROID_NDK_HOME}/sources/SDL2
+          ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib
+)
+
+# Add SDL2 include directories
+include_directories(${SDL2_INCLUDE_DIR})
 
 # Target link libraries
 target_link_libraries(lakesnes
