@@ -3,12 +3,8 @@
 #include <string>
 #include <thread>
 #include <mutex>
-#include <time.h>
-#include <unistd.h>
 
-#if HAVE_SDL2
 #include <SDL.h>
-#endif
 
 #include "snes.h"
 #include "tracing.h"
@@ -19,14 +15,12 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 static struct {
-#if HAVE_SDL2
     // rendering
     SDL_Window* window;
     SDL_Renderer* renderer;
     SDL_Texture* texture;
     // audio
     SDL_AudioDeviceID audioDevice;
-#endif
     int audioFrequency;
     int16_t* audioBuffer;
     // snes, timing
@@ -73,7 +67,6 @@ Java_com_lakesnes_emulator_EmulatorActivity_nativeSurfaceChanged(JNIEnv* env, jo
     glb.surfaceHeight = height;
     glb.surfaceReady = true;
     
-#if HAVE_SDL2
     if (!glb.window) {
         // Initialize SDL if not already done
         if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
@@ -121,23 +114,17 @@ Java_com_lakesnes_emulator_EmulatorActivity_nativeSurfaceChanged(JNIEnv* env, jo
             SDL_PauseAudioDevice(glb.audioDevice, 0);
         }
         
+        // Initialize SNES
+        glb.snes = snes_init();
+        glb.wantedFrames = 1.0 / 60.0;
+        glb.wantedSamples = glb.audioFrequency / 60;
+        glb.loaded = false;
+        glb.paused = true;
+        glb.fastForward = false;
+        glb.running = true;
+        
         LOGI("Android SDL initialized successfully");
     }
-#else
-    // Initialize without SDL2
-    glb.audioFrequency = 48000;
-    glb.audioBuffer = malloc(glb.audioFrequency / 50 * 4);
-    LOGI("Android emulator initialized without SDL2");
-#endif
-    
-    // Initialize SNES (always needed)
-    glb.snes = snes_init();
-    glb.wantedFrames = 1.0 / 60.0;
-    glb.wantedSamples = glb.audioFrequency / 60;
-    glb.loaded = false;
-    glb.paused = true;
-    glb.fastForward = false;
-    glb.running = true;
 }
 
 JNIEXPORT void JNICALL
@@ -265,15 +252,12 @@ static void playAudio() {
     if (!glb.snes || !glb.audioBuffer) return;
     
     snes_setSamples(glb.snes, glb.audioBuffer, glb.wantedSamples);
-#if HAVE_SDL2
     if(SDL_GetQueuedAudioSize(glb.audioDevice) <= glb.wantedSamples * 4 * 6) {
         SDL_QueueAudio(glb.audioDevice, glb.audioBuffer, glb.wantedSamples * 4);
     }
-#endif
 }
 
 static void renderScreen() {
-#if HAVE_SDL2
     if (!glb.texture || !glb.snes) return;
     
     void* pixels = NULL;
@@ -291,43 +275,22 @@ static void renderScreen() {
         SDL_RenderCopy(glb.renderer, glb.texture, NULL, NULL);
         SDL_RenderPresent(glb.renderer);
     }
-#else
-    // Without SDL2, just update the SNES pixels
-    if (glb.snes) {
-        snes_setPixels(glb.snes, NULL); // Would need Android surface API for actual rendering
-    }
-#endif
 }
 
 static void emulatorLoop() {
     LOGI("Starting emulator loop");
     
-#if HAVE_SDL2
     uint64_t countFreq = SDL_GetPerformanceFrequency();
     uint64_t lastCount = SDL_GetPerformanceCounter();
-#else
-    // Simple timing without SDL2
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    uint64_t lastCount = ts.tv_sec * 1000000000LL + ts.tv_nsec;
-    uint64_t countFreq = 1000000000LL; // nanoseconds per second
-#endif
     float timeAdder = 0.0;
     
     while(glb.running) {
-#if HAVE_SDL2
         uint64_t curCount = SDL_GetPerformanceCounter();
-#else
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        uint64_t curCount = ts.tv_sec * 1000000000LL + ts.tv_nsec;
-#endif
         uint64_t delta = curCount - lastCount;
         lastCount = curCount;
         float seconds = delta / (float) countFreq;
         timeAdder += seconds;
         
-#if HAVE_SDL2
         // Handle SDL events
         SDL_Event event;
         while(SDL_PollEvent(&event)) {
@@ -336,7 +299,6 @@ static void emulatorLoop() {
                 glb.running = false;
             }
         }
-#endif
         
         // Run emulator frame
         if(glb.loaded && !glb.paused) {
@@ -353,11 +315,7 @@ static void emulatorLoop() {
         }
         
         // Small sleep to prevent 100% CPU usage
-#if HAVE_SDL2
         SDL_Delay(1);
-#else
-        usleep(1000); // 1ms
-#endif
     }
     
     LOGI("Emulator loop ended");
