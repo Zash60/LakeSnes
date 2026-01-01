@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Snes Snes;
 
 #include "cpu.h"
@@ -92,5 +96,9 @@ int snes_saveBattery(Snes* snes, uint8_t* data);
 bool snes_loadBattery(Snes* snes, uint8_t* data, int size);
 int snes_saveState(Snes* snes, uint8_t* data);
 bool snes_loadState(Snes* snes, uint8_t* data, int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
