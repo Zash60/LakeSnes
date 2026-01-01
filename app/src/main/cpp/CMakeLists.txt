@@ -8,8 +8,16 @@ find_library(android-lib android)
 find_library(EGL-lib EGL)
 find_library(OpenSLES-lib OpenSLES)
 # SDL2 is required for the emulator
-# Download and include SDL2 in your project for full functionality
-find_library(SDL2-lib SDL2 REQUIRED)
+# SDL2 is included in the project at SDL2-2.26.5
+set(SDL2_DIR ${CMAKE_SOURCE_DIR}/SDL2-2.26.5)
+
+# Find SDL2 library in the project
+find_library(SDL2-lib 
+    NAMES SDL2
+    HINTS ${SDL2_DIR}
+    NO_DEFAULT_PATH
+    REQUIRED
+)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
@@ -41,7 +49,12 @@ add_library(lakesnes SHARED
 )
 
 # SDL2 include directory is required
-find_path(SDL2_INCLUDE_DIR SDL.h REQUIRED)
+find_path(SDL2_INCLUDE_DIR 
+    SDL.h 
+    HINTS ${SDL2_DIR}/include
+    NO_DEFAULT_PATH
+    REQUIRED
+)
 include_directories(${SDL2_INCLUDE_DIR})
 
 # Target link libraries
