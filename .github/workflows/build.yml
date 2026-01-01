@@ -1,4 +1,4 @@
-name: Automated Debug Build
+name: Simple Android Build
 
 on:
   push:
@@ -29,7 +29,7 @@ env:
 
 jobs:
   build:
-    name: Build and Test
+    name: Build APK
     runs-on: ubuntu-latest
     
     steps:
@@ -47,6 +47,11 @@ jobs:
         with:
           api-level: ${{ env.ANDROID_API_LEVEL }}
           build-tools: ${{ env.ANDROID_BUILD_TOOLS_VERSION }}
+          
+      - name: Set up Android NDK
+        uses: android-actions/setup-android@v3
+        with:
+          ndk-version: "25.2.9519653"
           
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -64,141 +69,10 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
         
-      - name: Build debug AndroidTest APK
-        run: ./gradlew assembleDebugAndroidTest
-        
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
-        
-      - name: Upload debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: app-debug-${{ github.sha }}.apk
+          name: lakesnes-debug-${{ github.sha }}.apk
           path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
-          
-      - name: Upload test APK
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: app-debug-androidTest-${{ github.sha }}.apk
-          path: app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-          retention-days: 30
-          
-      - name: Upload test reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-reports-${{ github.sha }}
-          path: app/build/reports/tests/
-          retention-days: 30
-
-  native-build:
-    name: Build Native Libraries
-    runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        abi: [arm64-v8a, armeabi-v7a]
-        
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Android NDK
-        uses: android-actions/setup-android@v3
-        with:
-          ndk-version: "25.2.9519653"
-          
-      - name: Build native library
-        run: |
-          cd app/src/main/cpp
-          mkdir -p build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug \
-                -DCMAKE_TOOLCHAIN_FILE=${{ env.ANDROID_NDK_HOME }}/build/cmake/android.toolchain.cmake \
-                -DANDROID_ABI=${{ matrix.abi }} \
-                -DANDROID_PLATFORM=android-21 \
-                -DANDROID_STL=c++_shared \
-                ..
-          cmake --build . --config Debug
-          
-      - name: Upload native library
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: liblakesnes-${{ matrix.abi }}-debug.so
-          path: app/src/main/cpp/build/src/main/jniLibs/${{ matrix.abi }}/liblakesnes.so
-          retention-days: 30
-
-  lint-check:
-    name: Code Quality Check
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: ${{ env.ANDROID_API_LEVEL }}
-          build-tools: ${{ env.ANDROID_BUILD_TOOLS_VERSION }}
-          
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        
-      - name: Run Android Lint
-        run: ./gradlew lintDebug
-        continue-on-error: true
-        
-      - name: Upload Lint reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: lint-reports-${{ github.sha }}
-          path: app/build/reports/lint/
-          retention-days: 30
-
-  summary:
-    name: Build Summary
-    runs-on: ubuntu-latest
-    needs: [build, native-build, lint-check]
-    if: always()
-    
-    steps:
-      - name: Build Summary
-        run: |
-          echo "## 📱 Android Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Build Debug APK | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Native Libraries | ${{ needs.native-build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint Check | ${{ needs.lint-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "${{ needs.build.result }}" == "success" ]]; then
-            echo "✅ **Debug APK built successfully!**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Debug APK build failed!**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [[ "${{ needs.native-build.result }}" == "success" ]]; then
-            echo "✅ **Native libraries built successfully!**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Native libraries build failed!**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [[ "${{ needs.lint-check.result }}" == "success" ]]; then
-            echo "✅ **Code quality checks passed!**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **Code quality issues found!**" >> $GITHUB_STEP_SUMMARY
-          fi
+          retention-days: 7

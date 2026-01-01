@@ -74,7 +74,7 @@ target_compile_options(lakesnes PRIVATE
     -ffast-math
     -funroll-loops
     -ftree-vectorize
-    -march=native
+    -march=armv8-a
 )
 
 # Debug build flags
