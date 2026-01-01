@@ -7,17 +7,15 @@ find_library(log-lib log)
 find_library(android-lib android)
 find_library(EGL-lib EGL)
 find_library(OpenSLES-lib OpenSLES)
-# SDL2 is required for the emulator
-# SDL2 is included in the project at SDL2-2.26.5
-set(SDL2_DIR ${CMAKE_SOURCE_DIR}/SDL2-2.26.5)
-
-# Find SDL2 library in the project
-find_library(SDL2-lib 
-    NAMES SDL2
-    HINTS ${SDL2_DIR}
+# SDL2 is provided as a stub implementation in the project
+# SDL2 include directory
+find_path(SDL2_INCLUDE_DIR 
+    SDL.h 
+    HINTS ${CMAKE_SOURCE_DIR}/SDL2/include
     NO_DEFAULT_PATH
     REQUIRED
 )
+include_directories(${SDL2_INCLUDE_DIR})
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
@@ -32,6 +30,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Add the native library
 add_library(lakesnes SHARED
     emulator_jni.cpp
+    SDL2/lib/SDL2_stub.c
     ../../../../snes/spc.c
     ../../../../snes/dsp.c
     ../../../../snes/apu.c
@@ -48,18 +47,8 @@ add_library(lakesnes SHARED
     ../../../../tracing.c
 )
 
-# SDL2 include directory is required
-find_path(SDL2_INCLUDE_DIR 
-    SDL.h 
-    HINTS ${SDL2_DIR}/include
-    NO_DEFAULT_PATH
-    REQUIRED
-)
-include_directories(${SDL2_INCLUDE_DIR})
-
 # Target link libraries
 target_link_libraries(lakesnes
-    ${SDL2-lib}
     ${log-lib}
     ${android-lib}
     ${EGL-lib}
