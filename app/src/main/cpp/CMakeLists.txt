@@ -10,9 +10,9 @@ find_library(OpenSLES-lib OpenSLES)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../..)
-include_directories(${CMAKE_SOURCE_DIR}/../../../snes)
-include_directories(${CMAKE_SOURCE_DIR}/../../../zip)
+include_directories(${CMAKE_SOURCE_DIR}/../../..)
+include_directories(${CMAKE_SOURCE_DIR}/../../../../snes)
+include_directories(${CMAKE_SOURCE_DIR}/../../../../zip)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 11)
@@ -21,20 +21,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Add the native library
 add_library(lakesnes SHARED
     emulator_jni.cpp
-    ../../../snes/spc.c
-    ../../../snes/dsp.c
-    ../../../snes/apu.c
-    ../../../snes/cpu.c
-    ../../../snes/dma.c
-    ../../../snes/ppu.c
-    ../../../snes/cart.c
-    ../../../snes/cx4.c
-    ../../../snes/input.c
-    ../../../snes/statehandler.c
-    ../../../snes/snes.c
-    ../../../snes/snes_other.c
-    ../../../zip/zip.c
-    ../../../tracing.c
+    ../../../../snes/spc.c
+    ../../../../snes/dsp.c
+    ../../../../snes/apu.c
+    ../../../../snes/cpu.c
+    ../../../../snes/dma.c
+    ../../../../snes/ppu.c
+    ../../../../snes/cart.c
+    ../../../../snes/cx4.c
+    ../../../../snes/input.c
+    ../../../../snes/statehandler.c
+    ../../../../snes/snes.c
+    ../../../../snes/snes_other.c
+    ../../../../zip/zip.c
+    ../../../../tracing.c
 )
 
 # Note: SDL2 functionality is not used in this native library
