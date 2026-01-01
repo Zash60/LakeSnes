@@ -7,7 +7,6 @@
 #include <SDL.h>
 
 #include "snes.h"
-#include "tracing.h"
 #include "zip.h"
 
 #define LOG_TAG "LakeSnes"
