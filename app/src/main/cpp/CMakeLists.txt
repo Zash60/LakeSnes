@@ -9,12 +9,7 @@ find_library(EGL-lib EGL)
 find_library(OpenSLES-lib OpenSLES)
 # SDL2 is provided as a stub implementation in the project
 # SDL2 include directory
-find_path(SDL2_INCLUDE_DIR 
-    SDL.h 
-    HINTS ${CMAKE_SOURCE_DIR}/SDL2/include
-    NO_DEFAULT_PATH
-    REQUIRED
-)
+set(SDL2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SDL2/include)
 include_directories(${SDL2_INCLUDE_DIR})
 
 # Include directories
