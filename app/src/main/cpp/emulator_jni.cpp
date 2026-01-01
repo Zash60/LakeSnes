@@ -43,7 +43,7 @@ static struct {
 } glb = {};
 
 static uint8_t* readFile(const char* name, int* length);
-static void loadRomFromPath(const char* path);
+static void loadRomFromPath(JNIEnv* env, jobject thiz, const char* path);
 static void closeRom(void);
 static void setPaths(const char* path);
 static void setTitle(const char* path);
