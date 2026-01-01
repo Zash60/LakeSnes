@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- SDL Surface will be added dynamically here -->
+    <SurfaceView
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Control overlay -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#80000000">
+
+        <Button
+            android:id="@+id/btn_pause"
+            style="@style/ControlButton"
+            android:text="@string/emu_pause" />
+
+        <Button
+            android:id="@+id/btn_reset"
+            style="@style/ControlButton"
+            android:text="@string/emu_reset" />
+
+        <Button
+            android:id="@+id/btn_fast_forward"
+            style="@style/ControlButton"
+            android:text="@string/emu_fast_forward" />
+
+        <Button
+            android:id="@+id/btn_state_save"
+            style="@style/ControlButton"
+            android:text="@string/emu_state_save" />
+
+        <Button
+            android:id="@+id/btn_state_load"
+            style="@style/ControlButton"
+            android:text="@string/emu_state_load" />
+
+        <Button
+            android:id="@+id/btn_menu"
+            style="@style/ControlButton"
+            android:text="≡" />
+
+    </LinearLayout>
+
+    <!-- Virtual gamepad (will be shown/hidden as needed) -->
+    <include
+        layout="@layout/layout_gamepad"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_margin="16dp" />
+
+</FrameLayout>
