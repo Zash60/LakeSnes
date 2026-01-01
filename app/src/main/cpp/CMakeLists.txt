@@ -15,6 +15,7 @@ include_directories(${SDL2_INCLUDE_DIR})
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../../..)
+include_directories(${CMAKE_SOURCE_DIR}/../../../../..)
 include_directories(${CMAKE_SOURCE_DIR}/../../../../snes)
 include_directories(${CMAKE_SOURCE_DIR}/../../../../zip)
 
