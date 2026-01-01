@@ -154,26 +154,6 @@ Java_com_lakesnes_emulator_EmulatorActivity_nativeLoadRom(JNIEnv* env, jobject t
     }
 }
 
-JNIEXPORT jbyteArray JNICALL
-Java_com_lakesnes_emulator_EmulatorActivity_nativeReadFileFromUri(JNIEnv* env, jobject thiz, jstring uri) {
-    const char* uriStr = env->GetStringUTFChars(uri, 0);
-    if (!uriStr) {
-        return NULL;
-    }
-    
-    // Check if this is a content:// URI
-    if (strncmp(uriStr, "content://", 9) != 0) {
-        // Regular file path, use standard file I/O
-        env->ReleaseStringUTFChars(uri, uriStr);
-        return NULL;
-    }
-    
-    // For content:// URIs, we'll handle them in the loadRomFromPath function
-    // This function returns NULL to indicate it should be handled there
-    env->ReleaseStringUTFChars(uri, uriStr);
-    return NULL;
-}
-
 JNIEXPORT void JNICALL
 Java_com_lakesnes_emulator_EmulatorActivity_nativePause(JNIEnv* env, jobject thiz) {
     glb.paused = !glb.paused;

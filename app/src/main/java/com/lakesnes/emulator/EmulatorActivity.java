@@ -29,7 +29,6 @@ public class EmulatorActivity extends AppCompatActivity implements SurfaceHolder
     public native void nativeTouchEvent(int action, float x, float y);
     public native void nativeButtonPressed(int button, boolean pressed);
     public native void nativeLoadRom(String path);
-    public native byte[] nativeReadFileFromUri(String uri);
     public native void nativePause();
     public native void nativeResume();
     public native void nativeReset();
