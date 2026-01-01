@@ -29,6 +29,7 @@ public class EmulatorActivity extends AppCompatActivity implements SurfaceHolder
     public native void nativeTouchEvent(int action, float x, float y);
     public native void nativeButtonPressed(int button, boolean pressed);
     public native void nativeLoadRom(String path);
+    public native byte[] nativeReadFileFromUri(String uri);
     public native void nativePause();
     public native void nativeResume();
     public native void nativeReset();
@@ -166,6 +167,8 @@ public class EmulatorActivity extends AppCompatActivity implements SurfaceHolder
         if (intent != null && Intent.ACTION_VIEW.equals(intent.getAction())) {
             Uri uri = intent.getData();
             if (uri != null) {
+                // Grant persistent permission for this URI
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 nativeLoadRom(uri.toString());
             }
         }
@@ -193,5 +196,48 @@ public class EmulatorActivity extends AppCompatActivity implements SurfaceHolder
     protected void onDestroy() {
         super.onDestroy();
         // Clean up native resources if needed
+    }
+    
+    /**
+     * Read file content from a content:// URI
+     * @param uri The content:// URI to read from
+     * @return byte array containing the file content, or null if failed
+     */
+    public byte[] nativeReadFileFromUri(String uri) {
+        try {
+            Uri parsedUri = Uri.parse(uri);
+            java.io.InputStream inputStream = getContentResolver().openInputStream(parsedUri);
+            if (inputStream == null) {
+                LOGE("Failed to open input stream for URI: %s", uri);
+                return null;
+            }
+            
+            java.io.ByteArrayOutputStream byteArrayOutputStream = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            int totalBytes = 0;
+            
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+                totalBytes += bytesRead;
+            }
+            
+            inputStream.close();
+            LOGI("Successfully read %d bytes from URI: %s", totalBytes, uri);
+            return byteArrayOutputStream.toByteArray();
+        } catch (Exception e) {
+            LOGE("Failed to read file from URI %s: %s", uri, e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    // Simple logging helpers
+    private void LOGI(String format, Object... args) {
+        android.util.Log.i("LakeSnes", String.format(format, args));
+    }
+    
+    private void LOGE(String format, Object... args) {
+        android.util.Log.e("LakeSnes", String.format(format, args));
     }
 }

@@ -42,7 +42,6 @@ static struct {
     bool running;
 } glb = {};
 
-static uint8_t* readFileFromUri(JNIEnv* env, const char* uri, int* length);
 static uint8_t* readFile(const char* name, int* length);
 static void loadRomFromPath(const char* path);
 static void closeRom(void);
@@ -150,9 +149,29 @@ JNIEXPORT void JNICALL
 Java_com_lakesnes_emulator_EmulatorActivity_nativeLoadRom(JNIEnv* env, jobject thiz, jstring path) {
     const char* pathStr = env->GetStringUTFChars(path, 0);
     if (pathStr) {
-        loadRomFromPath(pathStr);
+        loadRomFromPath(env, thiz, pathStr);
         env->ReleaseStringUTFChars(path, pathStr);
     }
+}
+
+JNIEXPORT jbyteArray JNICALL
+Java_com_lakesnes_emulator_EmulatorActivity_nativeReadFileFromUri(JNIEnv* env, jobject thiz, jstring uri) {
+    const char* uriStr = env->GetStringUTFChars(uri, 0);
+    if (!uriStr) {
+        return NULL;
+    }
+    
+    // Check if this is a content:// URI
+    if (strncmp(uriStr, "content://", 9) != 0) {
+        // Regular file path, use standard file I/O
+        env->ReleaseStringUTFChars(uri, uriStr);
+        return NULL;
+    }
+    
+    // For content:// URIs, we'll handle them in the loadRomFromPath function
+    // This function returns NULL to indicate it should be handled there
+    env->ReleaseStringUTFChars(uri, uriStr);
+    return NULL;
 }
 
 JNIEXPORT void JNICALL
@@ -338,11 +357,40 @@ static uint8_t* readFile(const char* name, int* length) {
     return buffer;
 }
 
-static void loadRomFromPath(const char* path) {
+static void loadRomFromPath(JNIEnv* env, jobject thiz, const char* path) {
     LOGI("Loading ROM: %s", path);
     
     int length = 0;
-    uint8_t* file = readFile(path, &length);
+    uint8_t* file = NULL;
+    
+    // Check if this is a content:// URI
+    if (strncmp(path, "content://", 9) == 0) {
+        // Use Android's ContentResolver to read the file
+        jclass activityClass = env->GetObjectClass(thiz);
+        jmethodID readFileMethod = env->GetMethodID(activityClass, "nativeReadFileFromUri", "(Ljava/lang/String;)[B");
+        
+        if (readFileMethod == NULL) {
+            LOGE("Failed to find nativeReadFileFromUri method");
+            env->DeleteLocalRef(activityClass);
+            return;
+        }
+        
+        jstring uriString = env->NewStringUTF(path);
+        jbyteArray fileData = (jbyteArray)env->CallObjectMethod(thiz, readFileMethod, uriString);
+        env->DeleteLocalRef(uriString);
+        
+        if (fileData != NULL) {
+            length = env->GetArrayLength(fileData);
+            file = (uint8_t*)malloc(length);
+            env->GetByteArrayRegion(fileData, 0, length, (jbyte*)file);
+            env->DeleteLocalRef(fileData);
+        }
+        
+        env->DeleteLocalRef(activityClass);
+    } else {
+        // Regular file path, use standard file I/O
+        file = readFile(path, &length);
+    }
     
     if(file == NULL) {
         LOGE("Failed to read file '%s'", path);
