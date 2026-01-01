@@ -7,13 +7,18 @@
 // Minimal SDL2 implementation for Android emulator
 // This provides stub functions that allow the emulator to compile and run
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Global state for SDL
 static bool sdl_initialized = false;
 static uint64_t performance_frequency = 1000000000LL; // nanoseconds per second
 
 int SDL_Init(uint32_t flags) {
     sdl_initialized = true;
-    performance_frequency = SDL_GetPerformanceFrequency();
+    // Initialize performance frequency directly to avoid circular dependency
+    performance_frequency = 1000000000LL; // nanoseconds per second
     return 0; // Success
 }
 
@@ -131,3 +136,7 @@ void SDL_free(void* memory) {
 void SDL_memset(void* dst, int c, size_t len) {
     memset(dst, c, len);
 }
+
+#ifdef __cplusplus
+}
+#endif

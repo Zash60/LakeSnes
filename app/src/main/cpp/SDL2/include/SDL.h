@@ -5,6 +5,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Basic SDL2 types
 typedef struct SDL_Window SDL_Window;
 typedef struct SDL_Renderer SDL_Renderer;
@@ -80,5 +84,9 @@ typedef struct SDL_AudioSpec {
 } SDL_AudioSpec;
 
 void SDL_memset(void* dst, int c, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SDL_H
