@@ -43,6 +43,7 @@ static struct {
 } glb = {};
 
 static uint8_t* readFileFromUri(JNIEnv* env, const char* uri, int* length);
+static uint8_t* readFile(const char* name, int* length);
 static void loadRomFromPath(const char* path);
 static void closeRom(void);
 static void setPaths(const char* path);
@@ -109,7 +110,7 @@ Java_com_lakesnes_emulator_EmulatorActivity_nativeSurfaceChanged(JNIEnv* env, jo
         if(glb.audioDevice == 0) {
             LOGE("Failed to open audio device: %s", SDL_GetError());
         } else {
-            glb.audioBuffer = malloc(glb.audioFrequency / 50 * 4);
+            glb.audioBuffer = (int16_t*)malloc(glb.audioFrequency / 50 * 4);
             SDL_PauseAudioDevice(glb.audioDevice, 0);
         }
         
@@ -186,7 +187,7 @@ JNIEXPORT void JNICALL
 Java_com_lakesnes_emulator_EmulatorActivity_nativeSaveState(JNIEnv* env, jobject thiz) {
     if (glb.snes && glb.loaded && glb.statePath) {
         int size = snes_saveState(glb.snes, NULL);
-        uint8_t* stateData = malloc(size);
+        uint8_t* stateData = (uint8_t*)malloc(size);
         snes_saveState(glb.snes, stateData);
         FILE* f = fopen(glb.statePath, "wb");
         if(f != NULL) {
@@ -327,7 +328,7 @@ static uint8_t* readFile(const char* name, int* length) {
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
     rewind(f);
-    uint8_t* buffer = malloc(size);
+    uint8_t* buffer = (uint8_t*)malloc(size);
     if(fread(buffer, size, 1, f) != 1) {
         fclose(f);
         return NULL;
@@ -375,7 +376,7 @@ static void closeRom() {
     
     int size = snes_saveBattery(glb.snes, NULL);
     if(size > 0) {
-        uint8_t* saveData = malloc(size);
+        uint8_t* saveData = (uint8_t*)malloc(size);
         snes_saveBattery(glb.snes, saveData);
         FILE* f = fopen(glb.savePath, "wb");
         if(f != NULL) {
