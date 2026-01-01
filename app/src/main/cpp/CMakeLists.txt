@@ -7,6 +7,7 @@ find_library(log-lib log)
 find_library(android-lib android)
 find_library(EGL-lib EGL)
 find_library(OpenSLES-lib OpenSLES)
+find_library(SDL2-lib SDL2)
 
 # Include directories
 include_directories(${CMAKE_SOURCE_DIR})
@@ -37,11 +38,23 @@ add_library(lakesnes SHARED
     ../../../../tracing.c
 )
 
-# Note: SDL2 functionality is not used in this native library
-# The emulator runs entirely in native code without SDL2 dependencies
+# Find SDL2 in Android NDK
+find_path(SDL2_INCLUDE_DIR SDL.h
+    PATHS ${ANDROID_NDK_HOME}/sources/android/SDL2
+          ${ANDROID_NDK_HOME}/sources/SDL2
+)
+
+# Add SDL2 include directories
+if(SDL2_INCLUDE_DIR)
+    include_directories(${SDL2_INCLUDE_DIR})
+else()
+    # Fallback: include from common SDL2 locations
+    include_directories(${ANDROID_NDK_HOME}/sources/android/SDL2)
+endif()
 
 # Target link libraries
 target_link_libraries(lakesnes
+    ${SDL2-lib}
     ${log-lib}
     ${android-lib}
     ${EGL-lib}
